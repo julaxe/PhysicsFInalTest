@@ -7,7 +7,7 @@ using UnityEngine;
 public class CollisionManager : MonoBehaviour
 {
     public CubeBehaviour[] cubes;
-    public BulletBehaviour[] spheres;
+    public BulletBehaviour[] bullets;
 
     private static Vector3[] faces;
 
@@ -27,7 +27,7 @@ public class CollisionManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        spheres = FindObjectsOfType<BulletBehaviour>();
+        bullets = FindObjectsOfType<BulletBehaviour>();
 
         // check each AABB with every other AABB in the scene
         for (int i = 0; i < cubes.Length; i++)
@@ -42,13 +42,13 @@ public class CollisionManager : MonoBehaviour
         }
 
         // Check each sphere against each AABB in the scene
-        foreach (var sphere in spheres)
+        foreach (var bullet in bullets)
         {
             foreach (var cube in cubes)
             {
                 if (cube.name != "Player")
                 {
-                    CheckSphereAABB(sphere, cube);
+                    CheckBulletAABB(bullet, cube);
                 }
                 
             }
@@ -57,27 +57,22 @@ public class CollisionManager : MonoBehaviour
 
     }
 
-    public static void CheckSphereAABB(BulletBehaviour s, CubeBehaviour b)
+    public static void CheckBulletAABB(BulletBehaviour b, CubeBehaviour c)
     {
-        // get box closest point to sphere center by clamping
-        var x = Mathf.Max(b.min.x, Mathf.Min(s.transform.position.x, b.max.x));
-        var y = Mathf.Max(b.min.y, Mathf.Min(s.transform.position.y, b.max.y));
-        var z = Mathf.Max(b.min.z, Mathf.Min(s.transform.position.z, b.max.z));
+         Contact contactB = new Contact(c);
 
-        var distance = Math.Sqrt((x - s.transform.position.x) * (x - s.transform.position.x) +
-                                 (y - s.transform.position.y) * (y - s.transform.position.y) +
-                                 (z - s.transform.position.z) * (z - s.transform.position.z));
-
-        if ((distance < s.radius) && (!s.isColliding))
+        if ((b.min.x <= c.max.x && b.max.x >= c.min.x) &&
+            (b.min.y <= c.max.y && b.max.y >= c.min.y) &&
+            (b.min.z <= c.max.z && b.max.z >= c.min.z))
         {
             // determine the distances between the contact extents
             float[] distances = {
-                (b.max.x - s.transform.position.x),
-                (s.transform.position.x - b.min.x),
-                (b.max.y - s.transform.position.y),
-                (s.transform.position.y - b.min.y),
-                (b.max.z - s.transform.position.z),
-                (s.transform.position.z - b.min.z)
+                (c.max.x - b.min.x),
+                (b.max.x - c.min.x),
+                (c.max.y - b.min.y),
+                (b.max.y - c.min.y),
+                (c.max.z - b.min.z),
+                (b.max.z - c.min.z)
             };
 
             float penetration = float.MaxValue;
@@ -93,31 +88,60 @@ public class CollisionManager : MonoBehaviour
                     face = faces[i];
                 }
             }
+            
+            // set the contact properties
 
-            s.penetration = penetration;
-            s.collisionNormal = face;
+            b.collisionNormal = face;
+            b.penetration = penetration;
             //s.isColliding = true;
 
             
-            Reflect(s);
+            Reflect(b);
         }
 
     }
     
     // This helper function reflects the bullet when it hits an AABB face
-    private static void Reflect(BulletBehaviour s)
+    private static void Reflect(BulletBehaviour b)
     {
-        if ((s.collisionNormal == Vector3.forward) || (s.collisionNormal == Vector3.back))
+        if ((b.collisionNormal == Vector3.forward) || (b.collisionNormal == Vector3.back))
         {
-            s.direction = new Vector3(s.direction.x, s.direction.y, -s.direction.z);
+            if(b.collisionNormal == Vector3.forward)
+            {
+                b.transform.position = new Vector3( b.transform.position.x,  b.transform.position.y,  b.transform.position.z - b.penetration - 0.1f);
+            }
+            else
+            {
+                 b.transform.position = new Vector3( b.transform.position.x,  b.transform.position.y,  b.transform.position.z + b.penetration + 0.1f);
+            }
+            b.direction = new Vector3(b.direction.x, b.direction.y, -b.direction.z);
+            Debug.Log("Reflecting in Z");
         }
-        else if ((s.collisionNormal == Vector3.right) || (s.collisionNormal == Vector3.left))
+        else if ((b.collisionNormal == Vector3.right) || (b.collisionNormal == Vector3.left))
         {
-            s.direction = new Vector3(-s.direction.x, s.direction.y, s.direction.z);
+            if(b.collisionNormal == Vector3.forward)
+            {
+                b.transform.position = new Vector3( b.transform.position.x - b.penetration - 0.1f,  b.transform.position.y,  b.transform.position.z );
+            }
+            else
+            {
+                 b.transform.position = new Vector3( b.transform.position.x + b.penetration + 0.1f,  b.transform.position.y,  b.transform.position.z);
+            }
+            b.direction = new Vector3(-b.direction.x, b.direction.y, b.direction.z);
+            Debug.Log("Reflecting in X");
         }
-        else if ((s.collisionNormal == Vector3.up) || (s.collisionNormal == Vector3.down))
+        else if ((b.collisionNormal == Vector3.up) || (b.collisionNormal == Vector3.down))
         {
-            s.direction = new Vector3(s.direction.x, -s.direction.y, s.direction.z);
+            if(b.collisionNormal == Vector3.up)
+            {
+                b.transform.position = new Vector3( b.transform.position.x,  b.transform.position.y - b.penetration - 0.1f,  b.transform.position.z );
+            }
+            else
+            {
+                 b.transform.position = new Vector3( b.transform.position.x,  b.transform.position.y + b.penetration + 0.1f,  b.transform.position.z);
+            }
+            b.direction = new Vector3(b.direction.x, -b.direction.y, b.direction.z);
+            Debug.Log("Reflecting in Y"+ b.penetration);
         }
     }
 

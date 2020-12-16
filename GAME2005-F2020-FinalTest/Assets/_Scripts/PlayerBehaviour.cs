@@ -29,8 +29,11 @@ public class PlayerBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        _Fire();
-        _Move();
+        if(MouseLook.lockCursor)
+        {
+            _Fire();
+            _Move();
+        }
     }
 
     private void _Move()

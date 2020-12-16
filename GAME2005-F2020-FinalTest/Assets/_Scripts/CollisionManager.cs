@@ -176,6 +176,30 @@ public class CollisionManager : MonoBehaviour
                     a.gameObject.GetComponent<RigidBody3D>().Stop();
                     a.isGrounded = true;
                 }
+                else //------------------------------PUSH -------------------------------
+                {
+                    if(contactB.face == Vector3.forward)
+                    {
+                        b.transform.position = new Vector3(b.transform.position.x,b.transform.position.y,b. transform.position.z + contactB.penetration);
+                        Debug.Log("Collision Forward");
+                    }
+                    else if(contactB.face == Vector3.back)
+                    {
+                        b.transform.position = new Vector3(b.transform.position.x,b.transform.position.y,b. transform.position.z - contactB.penetration);
+                        Debug.Log("Collision back");
+                    }
+                    else if(contactB.face == Vector3.right)
+                    {
+                        b.transform.position = new Vector3(b.transform.position.x + contactB.penetration,b.transform.position.y,b. transform.position.z);
+                        Debug.Log("Collision Right");
+                    }
+                    else if(contactB.face == Vector3.left)
+                    {
+                        b.transform.position = new Vector3(b.transform.position.x - contactB.penetration,b.transform.position.y,b. transform.position.z );
+                        Debug.Log("Collision Left");
+                    }
+                }
+                
                 
 
                 // add the new contact

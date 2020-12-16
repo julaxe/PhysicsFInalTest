@@ -64,16 +64,46 @@ public class PlayerBehaviour : MonoBehaviour
                 body.velocity = -playerCam.transform.forward * speed * Time.deltaTime;
             }
 
-            body.velocity = Vector3.Lerp(body.velocity, Vector3.zero, 0.9f);
+             body.velocity = Vector3.Lerp(body.velocity, Vector3.zero, 0.9f);
             body.velocity = new Vector3(body.velocity.x, 0.0f, body.velocity.z); // remove y
-            
 
             if (Input.GetAxisRaw("Jump") > 0.0f)
             {
-                body.velocity = transform.up * speed * 0.1f * Time.deltaTime;
+                body.velocity = transform.up * speed * 0.05f * Time.deltaTime;
+            }
+             
+             transform.position += body.velocity;
+        }
+        else
+        {
+            Vector3 newVel = body.velocity;
+            float AirSPeed = speed*0.8f;
+            if (Input.GetAxisRaw("Horizontal") > 0.0f)
+            {
+                // move right
+                newVel = playerCam.transform.right * AirSPeed*0.5f * Time.deltaTime;
             }
 
-            transform.position += body.velocity;
+            if (Input.GetAxisRaw("Horizontal") < 0.0f)
+            {
+                // move left
+                newVel = -playerCam.transform.right * AirSPeed*0.5f * Time.deltaTime;
+            }
+
+            if (Input.GetAxisRaw("Vertical") > 0.0f)
+            {
+                // move forward
+                newVel = playerCam.transform.forward * AirSPeed * Time.deltaTime;
+            }
+
+            if (Input.GetAxisRaw("Vertical") < 0.0f) 
+            {
+                // move Back
+                newVel = -playerCam.transform.forward * AirSPeed * Time.deltaTime;
+            }
+
+            newVel = Vector3.Lerp(newVel, Vector3.zero, 0.9f);
+            body.velocity = new Vector3(newVel.x, body.velocity.y, newVel.z); //maintain gravity
         }
     }
 
